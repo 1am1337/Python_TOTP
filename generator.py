@@ -13,6 +13,18 @@ with open('usr_data.csv', newline = '') as csvfile:
 dpg.create_context()
 dpg.create_viewport(title = 'TOTP Generator', width = 400, height = 200)
 
+
+def _logKey(sender, app_data, user_data):
+    print_test = ""
+    #print(f"sender: {sender}, \t app_data: {app_data}, \t user_data: {user_data}")
+    if sender == "newName":
+        names.append(app_data)
+        print(names)
+    elif sender == "newKey":
+        keys.append(app_data)
+        print(keys)
+
+
 def MatchIndex(sender):
     dpg.set_value("SelectedKey", keys[names.index(dpg.get_value(sender))])
     totp = pyotp.TOTP(keys[names.index(dpg.get_value(sender))])
@@ -29,20 +41,9 @@ with dpg.window(label = "TOTP Generator", tag = "PrimaryWindow"):
             dpg.add_combo(items = (names), callback = MatchIndex)
             dpg.add_text(label = "Selected TOTP Key", source = "SelectedKey")
             dpg.add_input_text(label = "Current TOTP", source = "GeneratedPassword")
-        with dpg.menu(label = "Configure Keys", indent = (-300)):
-            dpg.add_input_text(default_value = "Enter a Name", label = "Name", on_enter = True)
-            dpg.add_input_text(default_value = "Enter your TOTP Key", label = "TOTP Key (base32)", on_enter = True)
-            with open('usr_data.csv', 'w', newline='') as csvfile:
-                fieldnames = ['names', 'keys']
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()
-                for i in range(len(names)):
-                    writer.writerow({'names': names[i], 'keys': keys[i]})
-            with open('usr_data.csv', newline = '') as csvfile:
-                reader = csv.DictReader(csvfile)
-                for row in reader:
-                    names.append(row["names"]) 
-                    keys.append(row["keys"])
+        with dpg.menu(label = "Configure Keys"):
+            dpg.add_input_text(label = "Name", on_enter = True, tag = "newName", callback = _logKey)
+            dpg.add_input_text(label = "TOTP Key (base32)", on_enter = True, tag = "newKey", callback = _logKey)         
             with dpg.collapsing_header(label = "Show All Keys/Names"):
                 with dpg.table(header_row=True):
                     dpg.add_table_column(label="Names")
@@ -61,3 +62,10 @@ dpg.set_primary_window("PrimaryWindow", True)
 dpg.show_viewport()
 dpg.start_dearpygui()
 dpg.destroy_context()
+with open('usr_data.csv', 'w', newline='') as csvfile:
+    fieldnames = ['names', 'keys']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    writer.writeheader()
+    for i in range(len(names)):
+        writer.writerow({'names': names[i], 'keys': keys[i]})
+
