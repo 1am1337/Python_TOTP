@@ -17,14 +17,16 @@ def closeFile():
         fieldnames = ['names', 'keys']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-    for i in range(len(names)):
-        writer.writerow({'names': names[i], 'keys': keys[i]})    
+        for i in range(len(names)):
+            writer.writerow({'names': names[i], 'keys': keys[i]})    
 
 def _logKey(sender, app_data):                                                                                                    
     if sender == "newName":
         names.append(app_data)
+        amountNames = len(names)
     elif sender == "newKey":
         keys.append(app_data)
+        amountNames = len(names)
     print("_logKey called", app_data)
 
 def MatchIndex(sender):                                                            
@@ -34,7 +36,8 @@ def MatchIndex(sender):
     print("matchIndexCalled", names, keys)
 
 
-def main():    
+def main():
+    openFile()    
     dpg.create_context()            
     with dpg.window(label = "TOTP Generator", tag = "PrimaryWindow"): 
         with dpg.menu_bar():                                                                                                    
@@ -62,10 +65,9 @@ def main():
     dpg.set_primary_window("PrimaryWindow", True)                  
     dpg.show_viewport()
     dpg.start_dearpygui()
+    closeFile()
     dpg.destroy_context()
 
-if __name__ == '__main__':
-    openFile()
-    main()
-    closeFile()
+main()
+
 
