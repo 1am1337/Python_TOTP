@@ -32,7 +32,7 @@ def _logKey(sender, app_data):
 def MatchIndex(sender):                                                            
     dpg.set_value("SelectedKey", keys[names.index(dpg.get_value(sender))])
     totp = pyotp.TOTP(keys[names.index(dpg.get_value(sender))])
-    dpg.set_value("GeneratedPassword", totp.now()) 
+    dpg.set_value("GeneratedPassword", totp.now())
     print("matchIndexCalled", names, keys)
 
 
