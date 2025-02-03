@@ -21,7 +21,7 @@ var = StringVar()
 
 
 label = Label(root, textvariable = var )
-button = Button(root, text = "Update one time password", command = returnCurrentPassword("base32secret3232"))
+button = Button(root, text = "Update one time password", command = lambda:returnCurrentPassword("base32secret3232"))
 button.pack()
 label.pack()
 root.mainloop()
