@@ -25,10 +25,9 @@ def openFile():
         for row in reader:
             names.append(row["names"]) 
             keys.append(row["keys"])   
-    print("openFile called", names, keys, len(names), len(keys))
 
-def closeFile(): 
-    print("closeFile called") 
+
+def writeFile(): 
     with open('usr_data.csv', 'w', newline='') as csvfile:      
         fieldnames = ['names', 'keys']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -40,6 +39,8 @@ def closeFile():
 def click_bind(e):
     selectedKey.set(keys[names.index(keyNameSelection.get())])
     currentPassword.set(pyotp.TOTP(selectedKey.get()).now())
+    updateCombobox()
+
 
 
 def copyKey():
@@ -51,10 +52,11 @@ def copyKey():
 
 
 def setNewNameKeyPair():
-    print("setNewNameKeyPair called")
     names.append(NameInput.get())
     keys.append(KeyInput.get())
     NameKeyTable.insert("", tk.END, text=NameInput.get(), values=KeyInput.get())
+    updateCombobox()
+    writeFile()
 
 
 def SetGrid():
@@ -69,11 +71,17 @@ def SetGrid():
     KeyInput.grid(column = 0, row = 5, sticky="w")
     KeyInputLabel.grid(column = 0, row = 5, sticky="e")
     commitChangesButton.grid(column = 0, row = 6)
+
+
+def updateCombobox():
+    keyNameSelection.configure(values=names)
+
     
 openFile()
 root = Tk()
-root.geometry(f"800x400")
-root.minsize(800, 400)
+root.geometry(f"{widthVal}x400")
+root.minsize(widthVal, 400)
+root.maxsize(widthVal, 400)
 tabControl = Notebook(root)
 
 
@@ -87,7 +95,7 @@ selectedKey = StringVar()
 currentPassword = StringVar()
 currentPassword.set(standardTextValue)
 
-keyNameSelection = Combobox(GenTab, values = names, state = "readonly")
+keyNameSelection = Combobox(GenTab, state = "readonly", values = names)
 keyNameSelection.bind('<<ComboboxSelected>>', click_bind)
 copyButton = Button(GenTab, text = "copyButton", command = copyKey)
 label = Label(GenTab, textvariable = currentPassword)
@@ -98,13 +106,13 @@ NameKeyTable = Treeview(SetTab, columns=('Keys'))
 NameKeyTable.heading("#0", text = "Names")
 NameKeyTable.column("#0", minwidth=0, width=100, stretch=NO)
 NameKeyTable.heading("Keys", text = "Keys")
-NameKeyTable.column("Keys", minwidth=0, width=round(widthVal*0.8), stretch=YES)
+NameKeyTable.column("Keys", minwidth=0, width=round(widthVal*0.8), stretch=NO)
 for i in range(len(names)):
     NameKeyTable.insert(
         "",
         tk.END,
         text= names[i],
-        values=(keys[i])
+        values=keys[i]
     )
 
 NameInput = Entry(SetTab, width=(round(widthVal*0.08)))
@@ -114,9 +122,6 @@ KeyInputLabel = Label(SetTab, text= "KeyInput")
 commitChangesButton = Button(SetTab, text="commitChanges", command = setNewNameKeyPair)
 
 
-
-
 SetGrid()
 root.mainloop()
-print("after mainloop")
-closeFile()
+
