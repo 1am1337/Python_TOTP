@@ -1,3 +1,5 @@
+# totp updates at xx:xx:00 and xx:xx:30 -> implement timer
+
 import pyotp
 import time
 import tkinter as tk
@@ -7,49 +9,114 @@ import csv
 
 names = [] 
 keys = []
+standardTextValue = "Select a Key first :)"
+widthVal = 800
 
-def returnCurrentPassword(selectedKey):
-    currentPassword.set(pyotp.TOTP(selectedKey).now())
-    #print("returnCurrentPassword called: ", pyotp.TOTP(selectedKey).now(), selectedKey)
+def updateOTP(selectedKey):
+    if currentPassword.get() == standardTextValue or currentPassword.get() == "nothing to copy!":
+        currentPassword.set(standardTextValue)
+    else:
+        currentPassword.set(pyotp.TOTP(selectedKey).now())
+    
+
 def openFile():
     with open('usr_data.csv', newline = '') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             names.append(row["names"]) 
             keys.append(row["keys"])   
-def closeFile():  
+    print("openFile called", names, keys, len(names), len(keys))
+
+def closeFile(): 
+    print("closeFile called") 
     with open('usr_data.csv', 'w', newline='') as csvfile:      
         fieldnames = ['names', 'keys']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for i in range(len(names)):
-            writer.writerow({'names': names[i], 'keys': keys[i]})  
-def click_bind(e):
-    indexKeyNames = names.index(keyNameSelection.get())
-    selectedKey.set(keys[indexKeyNames])
-    #print(indexKeyNames, selectedKey.get()) 
-    returnCurrentPassword(selectedKey.get())
+            writer.writerow({'names': names[i], 'keys': keys[i]}) 
 
+
+def click_bind(e):
+    selectedKey.set(keys[names.index(keyNameSelection.get())])
+    currentPassword.set(pyotp.TOTP(selectedKey.get()).now())
+
+
+def copyKey():
+    if currentPassword.get() == standardTextValue or currentPassword.get() == "nothing to copy!":
+        currentPassword.set("nothing to copy!")
+    else:
+        root.clipboard_clear()
+        root.clipboard_append(currentPassword.get())
+
+
+def setNewNameKeyPair():
+    print("setNewNameKeyPair called")
+    names.append(NameInput.get())
+    keys.append(KeyInput.get())
+    NameKeyTable.insert("", tk.END, text=NameInput.get(), values=KeyInput.get())
+
+
+def SetGrid():
+    tabControl.grid(column=0,row=0)
+    label.grid(column=0, row=1)
+    updateButton.grid(column=1, row=1)
+    keyNameSelection.grid(column=0, row=2)
+    copyButton.grid(column=1, row=2)
+    NameKeyTable.grid(column = 0, row = 3)
+    NameInput.grid(column = 0, row = 4, sticky ="w")
+    NameInputLabel.grid(column = 0, row = 4,sticky="e")
+    KeyInput.grid(column = 0, row = 5, sticky="w")
+    KeyInputLabel.grid(column = 0, row = 5, sticky="e")
+    commitChangesButton.grid(column = 0, row = 6)
+    
 openFile()
 root = Tk()
-root.geometry("750x375")
+root.geometry(f"800x400")
+root.minsize(800, 400)
+tabControl = Notebook(root)
 
-currentPassword = StringVar()
-currentPassword.set("press button??")
+
+GenTab = Frame(tabControl)
+SetTab = Frame(tabControl)
+
+tabControl.add(GenTab, text="Generation")
+tabControl.add(SetTab, text="Add new Key")
+
 selectedKey = StringVar()
-countryvar = StringVar()
+currentPassword = StringVar()
+currentPassword.set(standardTextValue)
 
-keyNameSelection = Combobox(root, values = names)
-keyNameSelection.state(["readonly"])
-keyNameSelection.bind('<<ComboboxSelected>>',click_bind)
+keyNameSelection = Combobox(GenTab, values = names, state = "readonly")
+keyNameSelection.bind('<<ComboboxSelected>>', click_bind)
+copyButton = Button(GenTab, text = "copyButton", command = copyKey)
+label = Label(GenTab, textvariable = currentPassword)
+updateButton = Button(GenTab, text = "UpdateOTP", command = lambda: updateOTP(selectedKey.get()))
 
 
-label = Label(root, textvariable = currentPassword)
-button = Button(root, text = "Update one time password", command = lambda:returnCurrentPassword(selectedKey.get()))
-button.pack()
-label.pack()
-keyNameSelection.pack()
+NameKeyTable = Treeview(SetTab, columns=('Keys'))
+NameKeyTable.heading("#0", text = "Names")
+NameKeyTable.column("#0", minwidth=0, width=100, stretch=NO)
+NameKeyTable.heading("Keys", text = "Keys")
+NameKeyTable.column("Keys", minwidth=0, width=round(widthVal*0.8), stretch=YES)
+for i in range(len(names)):
+    NameKeyTable.insert(
+        "",
+        tk.END,
+        text= names[i],
+        values=(keys[i])
+    )
 
-# print(names, keys)
+NameInput = Entry(SetTab, width=(round(widthVal*0.08)))
+NameInputLabel = Label(SetTab, text= "NameInput")
+KeyInput = Entry(SetTab,  width=(round(widthVal*0.08)))
+KeyInputLabel = Label(SetTab, text= "KeyInput")
+commitChangesButton = Button(SetTab, text="commitChanges", command = setNewNameKeyPair)
+
+
+
+
+SetGrid()
 root.mainloop()
+print("after mainloop")
 closeFile()
