@@ -70,7 +70,18 @@ def SetGrid():
     NameInputLabel.grid(column = 0, row = 4,sticky="e")
     KeyInput.grid(column = 0, row = 5, sticky="w")
     KeyInputLabel.grid(column = 0, row = 5, sticky="e")
-    commitChangesButton.grid(column = 0, row = 6)
+    commitChangesButton.grid(column = 0, row = 6, sticky="w")
+    deleteButton.grid(column = 0, row = 6, sticky="e")
+
+
+def deleteKeyNamePair():
+    itemToDelete = NameKeyTable.focus()
+    NameKeyTable.delete(itemToDelete)
+    keys.remove(keys[names.index(itemToDelete)])
+    names.remove(itemToDelete)
+    updateCombobox()
+    writeFile()
+
 
 
 def updateCombobox():
@@ -112,7 +123,8 @@ for i in range(len(names)):
         "",
         tk.END,
         text= names[i],
-        values=keys[i]
+        values=keys[i],
+        iid = names[i]
     )
 
 NameInput = Entry(SetTab, width=(round(widthVal*0.08)))
@@ -120,6 +132,7 @@ NameInputLabel = Label(SetTab, text= "NameInput")
 KeyInput = Entry(SetTab,  width=(round(widthVal*0.08)))
 KeyInputLabel = Label(SetTab, text= "KeyInput")
 commitChangesButton = Button(SetTab, text="commitChanges", command = setNewNameKeyPair)
+deleteButton = Button(SetTab, text="delete", command = deleteKeyNamePair)
 
 
 SetGrid()
