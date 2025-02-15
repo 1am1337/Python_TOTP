@@ -1,4 +1,4 @@
-# totp updates at xx:xx:00 and xx:xx:30 -> implement timer
+# totp updates at xx:xx:00 and xx:xx:30 -> implement 
 
 import pyotp
 import time
@@ -6,26 +6,41 @@ import tkinter as tk
 from tkinter import * 
 from tkinter.ttk import *
 import csv
+import datetime
+from pathlib import Path
 
 names = [] 
 keys = []
 standardTextValue = "Select a Key first :)"
 widthVal = 800
+fileLocation = Path("usr_data.csv")
+
+
+def getCurrentSeconds():
+    dateTime = str(datetime.datetime.now(datetime.UTC))
+    timeTime = dateTime.split(" ")
+    timeTime = timeTime[1].split(":") 
+    timeTime = timeTime[2]
+    timeTime = timeTime.rstrip("+0")
+    timeTime = int(float(timeTime))
+    if timeTime < 30:
+        timeTime = -1*(timeTime-30)
+    else:
+        timeTime = -1*(timeTime-60)
+    return timeTime
 
 def updateOTP(selectedKey):
     if currentPassword.get() == standardTextValue or currentPassword.get() == "nothing to copy!":
         currentPassword.set(standardTextValue)
     else:
         currentPassword.set(pyotp.TOTP(selectedKey).now())
-    
-
+    #updateTimer()  
 def openFile():
     with open('usr_data.csv', newline = '') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             names.append(row["names"]) 
             keys.append(row["keys"])   
-
 
 def writeFile(): 
     with open('usr_data.csv', 'w', newline='') as csvfile:      
@@ -35,13 +50,10 @@ def writeFile():
         for i in range(len(names)):
             writer.writerow({'names': names[i], 'keys': keys[i]}) 
 
-
 def click_bind(e):
     selectedKey.set(keys[names.index(keyNameSelection.get())])
     currentPassword.set(pyotp.TOTP(selectedKey.get()).now())
     updateCombobox()
-
-
 
 def copyKey():
     if currentPassword.get() == standardTextValue or currentPassword.get() == "nothing to copy!":
@@ -50,7 +62,6 @@ def copyKey():
         root.clipboard_clear()
         root.clipboard_append(currentPassword.get())
 
-
 def setNewNameKeyPair():
     names.append(NameInput.get())
     keys.append(KeyInput.get())
@@ -58,13 +69,13 @@ def setNewNameKeyPair():
     updateCombobox()
     writeFile()
 
-
 def SetGrid():
     tabControl.grid(column=0,row=0)
-    label.grid(column=0, row=1)
-    updateButton.grid(column=1, row=1)
+    passwordLabel.grid(column=0, row=1)
+    remainingTimeLabel.grid(column=2, row=1)
+    updateButton.grid(column=1, row=1, sticky ="e")
     keyNameSelection.grid(column=0, row=2)
-    copyButton.grid(column=1, row=2)
+    copyButton.grid(column=1, row=2, sticky="e")
     NameKeyTable.grid(column = 0, row = 3)
     NameInput.grid(column = 0, row = 4, sticky ="w")
     NameInputLabel.grid(column = 0, row = 4,sticky="e")
@@ -72,7 +83,6 @@ def SetGrid():
     KeyInputLabel.grid(column = 0, row = 5, sticky="e")
     commitChangesButton.grid(column = 0, row = 6, sticky="w")
     deleteButton.grid(column = 0, row = 6, sticky="e")
-
 
 def deleteKeyNamePair():
     itemToDelete = NameKeyTable.focus()
@@ -82,13 +92,20 @@ def deleteKeyNamePair():
     updateCombobox()
     writeFile()
 
-
-
 def updateCombobox():
     keyNameSelection.configure(values=names)
 
-    
-openFile()
+def updateTimer():
+    TimerText.set(f"OTP valid for {getCurrentSeconds()} seconds")
+    time.sleep(1)
+    updateTimer()
+if fileLocation.is_file():
+    openFile()
+else:
+    writeFile()
+
+
+
 root = Tk()
 root.geometry(f"{widthVal}x400")
 root.minsize(widthVal, 400)
@@ -99,18 +116,22 @@ tabControl = Notebook(root)
 GenTab = Frame(tabControl)
 SetTab = Frame(tabControl)
 
-tabControl.add(GenTab, text="Generation")
+tabControl.add(GenTab, text="Password Generation")
 tabControl.add(SetTab, text="Add new Key")
 
 selectedKey = StringVar()
 currentPassword = StringVar()
 currentPassword.set(standardTextValue)
 
+TimerText = StringVar()
+TimerText.set("")
+
 keyNameSelection = Combobox(GenTab, state = "readonly", values = names)
 keyNameSelection.bind('<<ComboboxSelected>>', click_bind)
-copyButton = Button(GenTab, text = "copyButton", command = copyKey)
-label = Label(GenTab, textvariable = currentPassword)
-updateButton = Button(GenTab, text = "UpdateOTP", command = lambda: updateOTP(selectedKey.get()))
+copyButton = Button(GenTab, text = "Copy OTP", command = copyKey, width = 10)
+passwordLabel = Label(GenTab, textvariable = currentPassword)
+updateButton = Button(GenTab, text = "Update OTP", command = lambda: updateOTP(selectedKey.get()), width = 10)
+remainingTimeLabel = Label(GenTab, textvariable = TimerText)
 
 
 NameKeyTable = Treeview(SetTab, columns=('Keys'))
@@ -127,12 +148,12 @@ for i in range(len(names)):
         iid = names[i]
     )
 
-NameInput = Entry(SetTab, width=(round(widthVal*0.08)))
-NameInputLabel = Label(SetTab, text= "NameInput")
-KeyInput = Entry(SetTab,  width=(round(widthVal*0.08)))
-KeyInputLabel = Label(SetTab, text= "KeyInput")
-commitChangesButton = Button(SetTab, text="commitChanges", command = setNewNameKeyPair)
-deleteButton = Button(SetTab, text="delete", command = deleteKeyNamePair)
+NameInput = Entry(SetTab, width=(round(widthVal*0.075)))
+NameInputLabel = Label(SetTab, text= "Enter an arbitrary Name")
+KeyInput = Entry(SetTab,  width=(round(widthVal*0.075)))
+KeyInputLabel = Label(SetTab, text= "Input your TOTP Key here")
+commitChangesButton = Button(SetTab, text="Add Key to list", command = setNewNameKeyPair)
+deleteButton = Button(SetTab, text="Delete selected TOTP key", command = deleteKeyNamePair)
 
 
 SetGrid()
