@@ -105,6 +105,7 @@ else:
 
 
 root = Tk()
+root.title('TOTP Generator')
 root.geometry(f"{widthVal}x400")
 root.minsize(widthVal, 400)
 root.maxsize(widthVal, 400)
