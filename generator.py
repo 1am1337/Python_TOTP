@@ -1,12 +1,10 @@
-# totp updates at xx:xx:00 and xx:xx:30 -> implement 
-
 import pyotp
 import time
 import tkinter as tk
 from tkinter import * 
 from tkinter.ttk import *
 import csv
-import datetime
+from datetime import datetime
 from pathlib import Path
 
 names = [] 
@@ -17,24 +15,26 @@ fileLocation = Path("usr_data.csv")
 
 
 def getCurrentSeconds():
-    dateTime = str(datetime.datetime.now(datetime.UTC))
-    timeTime = dateTime.split(" ")
-    timeTime = timeTime[1].split(":") 
-    timeTime = timeTime[2]
-    timeTime = timeTime.rstrip("+0")
-    timeTime = int(float(timeTime))
-    if timeTime < 30:
-        timeTime = -1*(timeTime-30)
+    return 30 - (datetime.now().second % 30)
+
+
+def updateTime():
+    if getCurrentSeconds() == 1:
+        remainingSeconds.set("OTP  is now invalid")
     else:
-        timeTime = -1*(timeTime-60)
-    return timeTime
+        remainingSeconds.set(f"OTP valid for {getCurrentSeconds()} seconds")
+        root.after(1000, updateTime)
+            
+
 
 def updateOTP(selectedKey):
-    if currentPassword.get() == standardTextValue or currentPassword.get() == "nothing to copy!":
+    if currentPassword.get() == standardTextValue or currentPassword.get() == "Nothing to copy!":
         currentPassword.set(standardTextValue)
     else:
         currentPassword.set(pyotp.TOTP(selectedKey).now())
-    #updateTimer()  
+        updateTime()
+
+
 def openFile():
     with open('usr_data.csv', newline = '') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -56,8 +56,8 @@ def click_bind(e):
     updateCombobox()
 
 def copyKey():
-    if currentPassword.get() == standardTextValue or currentPassword.get() == "nothing to copy!":
-        currentPassword.set("nothing to copy!")
+    if currentPassword.get() == standardTextValue or currentPassword.get() == "Nothing to copy!":
+        currentPassword.set("Nothing to copy!")
     else:
         root.clipboard_clear()
         root.clipboard_append(currentPassword.get())
@@ -95,10 +95,8 @@ def deleteKeyNamePair():
 def updateCombobox():
     keyNameSelection.configure(values=names)
 
-def updateTimer():
-    TimerText.set(f"OTP valid for {getCurrentSeconds()} seconds")
-    time.sleep(1)
-    updateTimer()
+
+
 if fileLocation.is_file():
     openFile()
 else:
@@ -123,15 +121,15 @@ selectedKey = StringVar()
 currentPassword = StringVar()
 currentPassword.set(standardTextValue)
 
-TimerText = StringVar()
-TimerText.set("")
+remainingSeconds = StringVar()
+remainingSeconds.set(" ")
 
 keyNameSelection = Combobox(GenTab, state = "readonly", values = names)
 keyNameSelection.bind('<<ComboboxSelected>>', click_bind)
 copyButton = Button(GenTab, text = "Copy OTP", command = copyKey, width = 10)
 passwordLabel = Label(GenTab, textvariable = currentPassword)
 updateButton = Button(GenTab, text = "Update OTP", command = lambda: updateOTP(selectedKey.get()), width = 10)
-remainingTimeLabel = Label(GenTab, textvariable = TimerText)
+remainingTimeLabel = Label(GenTab, textvariable = remainingSeconds)
 
 
 NameKeyTable = Treeview(SetTab, columns=('Keys'))
